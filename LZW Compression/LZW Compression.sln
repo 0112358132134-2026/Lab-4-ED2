@@ -5,6 +5,10 @@ VisualStudioVersion = 16.0.30413.136
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LZW-structures", "LZW-structures\LZW-structures.csproj", "{F6D269D5-01F5-4D3A-9CE4-10136446A027}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestConsole", "TestConsole\TestConsole.csproj", "{425CA1A0-5B6C-42AD-9E4E-98939423E605}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API-LZW", "API-LZW\API-LZW.csproj", "{BF74B425-88B6-4F72-AFF7-42B7E7438C1D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{F6D269D5-01F5-4D3A-9CE4-10136446A027}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F6D269D5-01F5-4D3A-9CE4-10136446A027}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F6D269D5-01F5-4D3A-9CE4-10136446A027}.Release|Any CPU.Build.0 = Release|Any CPU
+		{425CA1A0-5B6C-42AD-9E4E-98939423E605}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{425CA1A0-5B6C-42AD-9E4E-98939423E605}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{425CA1A0-5B6C-42AD-9E4E-98939423E605}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{425CA1A0-5B6C-42AD-9E4E-98939423E605}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BF74B425-88B6-4F72-AFF7-42B7E7438C1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BF74B425-88B6-4F72-AFF7-42B7E7438C1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BF74B425-88B6-4F72-AFF7-42B7E7438C1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BF74B425-88B6-4F72-AFF7-42B7E7438C1D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
