@@ -5,5 +5,9 @@
     <RootNamespace>API_LZW</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\LZW-structures\LZW-structures.csproj" />
+  </ItemGroup>
+
 
 </Project>
