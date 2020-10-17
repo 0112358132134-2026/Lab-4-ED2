@@ -14,7 +14,15 @@ namespace LZW_structures
         public int index = 1;
         public int posOriginalData = 0;
         #endregion
-
+        #region "Compression"
+        public byte[] Compression(string path, string originalName)
+        {
+            OriginalTable(path);
+            TextInNumbers(path);
+            int maxNumber = textInNumbers.Max();
+            byte[] compressedText = CompressedText(maxNumber, originalName);
+            return compressedText;
+        }
         public void OriginalTable(string path)
         {
             int counter = 0;
@@ -23,12 +31,12 @@ namespace LZW_structures
 
             while (fs.Length - (8 * counter) > 0)
             {
-                byte[] pieceOfText = reader.ReadBytes(8);
-                for (int i = 0; i < pieceOfText.Length; i++)
+                byte[] buffer = reader.ReadBytes(8);
+                for (int i = 0; i < buffer.Length; i++)
                 {
-                    if (!symbols.ContainsKey(((char)pieceOfText[i]).ToString()))
+                    if (!symbols.ContainsKey(((char)buffer[i]).ToString()))
                     {
-                        char character = (char)pieceOfText[i];
+                        char character = (char)buffer[i];
                         symbols.Add(character.ToString(), index);
                         index++;
                     }
@@ -37,7 +45,6 @@ namespace LZW_structures
             }
             posOriginalData = index - 1;
         }
-
         public void TextInNumbers(string path)
         {
             int counter = 0;
@@ -49,12 +56,12 @@ namespace LZW_structures
 
             while (fs.Length - (8 * counter) > 0)
             {
-                byte[] pieceOfText = reader.ReadBytes(8);
+                byte[] buffer = reader.ReadBytes(8);
                 int counterTwo = 0;
 
-                while (counterTwo < pieceOfText.Length)
+                while (counterTwo < buffer.Length)
                 {
-                    longesChainPlusOne.Append(((char)pieceOfText[counterTwo]).ToString());
+                    longesChainPlusOne.Append(((char)buffer[counterTwo]).ToString());
                     if (!symbols.ContainsKey(longesChainPlusOne.ToString()))
                     {
                         textInNumbers.Add(symbols[longesChain.ToString()]);
@@ -66,7 +73,7 @@ namespace LZW_structures
                     }
                     else
                     {
-                        longesChain.Append(((char)pieceOfText[counterTwo]).ToString());
+                        longesChain.Append(((char)buffer[counterTwo]).ToString());
                     }
                     counterTwo++;
                 }
@@ -77,7 +84,6 @@ namespace LZW_structures
                 textInNumbers.Add(symbols[longesChain.ToString()]);
             } 
         }
-
         public byte[] CompressedText(int maxValue, string originalName)
         {
             string binaryMajor = ConvertDecimalToBinary(maxValue);
@@ -131,29 +137,6 @@ namespace LZW_structures
             }
             return result;
         }
-
-        public List<int> OriginalTableToBytes()
-        {
-            List<string> characters = new List<string>();
-            List<int> result = new List<int>();
-            int counter = 0;
-            foreach (KeyValuePair<string, int> symbol in symbols)
-            {
-                while (counter < posOriginalData)
-                {
-                    characters.Add(symbol.Key);
-                    counter++;
-                }
-            }
-            //
-            for (int i = 0; i < characters.Count; i++)
-            {
-                char[] oka = characters[i].ToCharArray();
-                result.Add((byte)oka[0]);
-            }
-            return result;
-        }
-
         public List<string> SeparateBytes(string largeBinary)
         {
             StringBuilder copy = new StringBuilder();
@@ -176,13 +159,32 @@ namespace LZW_structures
                             copy.Append("0");
                         }
                         result.Add(copy.ToString());
-                    }                   
+                    }
                     OK = true;
                 }
             }
             return result;
         }
-
+        public List<int> OriginalTableToBytes()
+        {
+            List<string> characters = new List<string>();
+            List<int> result = new List<int>();
+            int counter = 0;
+            foreach (KeyValuePair<string, int> symbol in symbols)
+            {
+                if(counter < posOriginalData)
+                {
+                    characters.Add(symbol.Key);
+                    counter++;
+                }
+            }            
+            for (int i = 0; i < characters.Count; i++)
+            {
+                char[] oka = characters[i].ToCharArray();
+                result.Add((byte)oka[0]);
+            }
+            return result;
+        }
         public List<byte> BytesToOriginalName(string originalName)
         {
             List<byte> listAux = new List<byte>();
@@ -194,22 +196,13 @@ namespace LZW_structures
             listAux.Add(10);
             return listAux;
         }
-
-
-        public byte[] Compression(string path, string originalName)
-        {
-            OriginalTable(path);
-            TextInNumbers(path);
-            int maxNumber = textInNumbers.Max();
-            byte[] compressedText = CompressedText(maxNumber, originalName);
-            return compressedText;
-        }
-
+        #endregion
+        #region "Descompression"
         public List<char> Decompression(List<byte> bytes)
         {
             return null;
         }
-
+        #endregion
         #region "Auxiliaries"
         public int ConvertBinaryToDecimal(string binary)
         {
