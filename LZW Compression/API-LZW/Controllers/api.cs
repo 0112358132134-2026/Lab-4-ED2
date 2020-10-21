@@ -82,22 +82,34 @@ namespace API_LZW.Controllers
         [Route("decompress")]
         public async Task<ActionResult> Decompression([FromForm] IFormFile file)
         {
-            string path = _env.ContentRootPath;
-            byte[] result = null;
-            string originalName = "";
-            using (var memory = new MemoryStream())
+            try
             {
-                await file.CopyToAsync(memory);
-                byte[] bytes = memory.ToArray();
-                using (FileStream fStream = System.IO.File.Create(path + "/Copy/" + file.FileName))
+                string path = _env.ContentRootPath;
+                byte[] result = null;
+                string originalName = "";
+                using (var memory = new MemoryStream())
                 {
-                    fStream.Write(memory.ToArray());
+                    await file.CopyToAsync(memory);
+                    byte[] bytes = memory.ToArray();
+                    using (FileStream fStream = System.IO.File.Create(path + "/Copy2/" + file.FileName))
+                    {
+                        fStream.Write(memory.ToArray());
+                    }
+                    originalName = lzw.GetOriginalName(path + "/Copy2/" + file.FileName);
+                    result = lzw.Decompression(path + "/Copy2/" + file.FileName);
                 }
-                //originalName = lzw.GetOriginalName(path + "/Copy/" + file.FileName);
-                result = lzw.Decompression(path + "/Copy/" + file.FileName);
+                Archive response = new Archive
+                {
+                    Content = result,
+                    ContentType = "compressedFile / txt",
+                    FileName = originalName
+                };
+                return File(response.Content, response.ContentType, response.FileName);
             }
-
-            return Ok();
+            catch (System.Exception)
+            {
+                return StatusCode(500);
+            }
         }
 
         [HttpGet]

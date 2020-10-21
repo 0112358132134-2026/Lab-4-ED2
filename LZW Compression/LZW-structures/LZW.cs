@@ -270,7 +270,7 @@ namespace LZW_structures
             {
                 if (i == 0)
                 {
-                    currentString.Append(symbolsAux[i]);
+                    currentString.Append(symbolsAux[textInNumbers[i]]);
                 }
                 else
                 {
@@ -279,7 +279,7 @@ namespace LZW_structures
                         previusString.Clear();
                         previusString.Append(currentString.ToString());
                         currentString.Clear();
-                        currentString.Append(symbolsAux[i]);
+                        currentString.Append(symbolsAux[textInNumbers[i]]);
                         previousPlusFirst.Clear();
                         previousPlusFirst.Append(previusString.ToString() + currentString.ToString(0,1));
 
@@ -287,15 +287,20 @@ namespace LZW_structures
                         index++;
                     }
                 }
-                auxResult.Append(currentString.ToString());
+                if (textInNumbers[i] != 0)
+                {
+                    auxResult.Append(currentString.ToString());
+                }
             }
-            return null;
+
+            byte[] result = Encoding.ASCII.GetBytes(auxResult.ToString());
+            return result;
         }
         public void FillList(string path)
         {
             int counter = 0;
             int counterAux = 0;
-            int metaDataLength = GetOriginalName(path).Length + 3 + symbols.Count;
+            int metaDataLength = GetOriginalName(path).Length + 3 + symbolsAux.Count;
 
             FileStream fs = File.OpenRead(path);
             BinaryReader reader = new BinaryReader(fs);
@@ -325,7 +330,8 @@ namespace LZW_structures
                 aux.Append(ConvertDecimalToBinary(textInNumbers[i]));
                 if (aux.Length < 8)
                 {
-                    for (int j = 0; j < 8 - aux.Length; j++)
+                    int lenght = aux.Length;
+                    for (int j = 0; j < 8 - lenght; j++)
                     {
                         aux.Insert(0, "0");
                     }
