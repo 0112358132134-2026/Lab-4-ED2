@@ -27,25 +27,76 @@ namespace API_LZW.Controllers
         [Route("compress/{name}")]
         public async Task<ActionResult> Compression([FromForm] IFormFile file, string name)
         {
-            string path = _env.ContentRootPath;
-            byte[] result = null;
-            using (var memory = new MemoryStream())
+            try
             {
-                await file.CopyToAsync(memory);
-                using (FileStream fStream = System.IO.File.Create(path + "/Copy/" + file.FileName))
+                #region "Compression"
+                string path = _env.ContentRootPath;
+                byte[] result = null;
+                byte[] copy = null;
+                using (var memory = new MemoryStream())
                 {
-                    fStream.Write(memory.ToArray());
+                    await file.CopyToAsync(memory);
+                    copy = memory.ToArray();
+                    using (FileStream fStream = System.IO.File.Create(path + "/Copy/" + file.FileName))
+                    {
+                        fStream.Write(memory.ToArray());
+                    }
+                    result = lzw.Compression(path + "/Copy/" + file.FileName, file.FileName);
                 }
-                result = lzw.Compression(path + "/Copy/" + file.FileName, file.FileName);
-                System.IO.File.Delete(path + "/Copy/" + file.FileName);
+                //System.IO.File.Delete(path + "/Copy/" + file.FileName);
+                Archive response = new Archive
+                {
+                    Content = result,
+                    ContentType = "compressedFile / huff",
+                    FileName = name
+                };
+                #endregion
+                #region "Json"
+                LZW_Compressions jsonValues = new LZW_Compressions
+                {
+                    OriginalName = file.FileName,
+                    CompressedFilePath = _env.ContentRootPath + "\\Compressions",
+                    CompressionRatio = (double)result.Length / (double)copy.Length,
+                    CompressionFactor = (double)copy.Length / (double)result.Length,
+                    ReductionPorcentage = 1 - ((double)result.Length / (double)copy.Length)
+                };
+                JsonFile addToJson = new JsonFile();
+                addToJson.WriteInJson(jsonValues, _env.ContentRootPath);
+                #endregion
+                #region "Path"
+                string compressionPath = _env.ContentRootPath + "/Compressions/" + name + ".huff";
+                using (FileStream fs = System.IO.File.Create(compressionPath))
+                {
+                    fs.Write(result);
+                }
+                #endregion
+                return File(response.Content, response.ContentType, response.FileName + ".huff");
             }
-            return Ok();
+            catch (System.Exception)
+            {
+                return StatusCode(500);
+            }
         }
 
         [HttpPost]
         [Route("decompress")]
         public async Task<ActionResult> Decompression([FromForm] IFormFile file)
-        {            
+        {
+            string path = _env.ContentRootPath;
+            byte[] result = null;
+            string originalName = "";
+            using (var memory = new MemoryStream())
+            {
+                await file.CopyToAsync(memory);
+                byte[] bytes = memory.ToArray();
+                using (FileStream fStream = System.IO.File.Create(path + "/Copy/" + file.FileName))
+                {
+                    fStream.Write(memory.ToArray());
+                }
+                //originalName = lzw.GetOriginalName(path + "/Copy/" + file.FileName);
+                result = lzw.Decompression(path + "/Copy/" + file.FileName);
+            }
+
             return Ok();
         }
 

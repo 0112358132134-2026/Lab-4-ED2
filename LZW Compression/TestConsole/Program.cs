@@ -6,7 +6,9 @@ namespace TestConsole
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            string prueba = "\n\ttomate";
+            string sub = prueba.Substring(0, 2);
+            Console.WriteLine(sub);
         }
     }
 }

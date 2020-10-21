@@ -10,6 +10,7 @@ namespace LZW_structures
     {
         #region "Global_Variables"
         public Dictionary<string, int> symbols = new Dictionary<string, int>();
+        public Dictionary<int, string> symbolsAux = new Dictionary<int, string>();
         public List<int> textInNumbers = new List<int>();
         public int index = 1;
         public int posOriginalData = 0;
@@ -102,7 +103,7 @@ namespace LZW_structures
                 binaries.Append(binary.ToString());
             }
             //Con el string "binaries" individuales de cada número, dividimos de 8 en 8 bits: 
-            List<string> bytesToCompressedText = SeparateBytes(binaries.ToString());
+            List<string> bytesToCompressedText = SeparateBytes(binaries.ToString(),8);
             //Convertimos los bytes (en binario) a decimales y los agregamos a otra lista:
             List<int> bytesCompressedTex = new List<int>();
             for (int i = 0; i < bytesToCompressedText.Count; i++)
@@ -134,34 +135,6 @@ namespace LZW_structures
             for (int i = 0; i < auxResult.Count; i++)
             {
                 result[i] = (byte)auxResult[i];
-            }
-            return result;
-        }
-        public List<string> SeparateBytes(string largeBinary)
-        {
-            StringBuilder copy = new StringBuilder();
-            copy.Append(largeBinary);
-            List<string> result = new List<string>();
-            bool OK = false;
-            while (!OK)
-            {
-                if (copy.Length >= 8)
-                {
-                    result.Add(copy.ToString(0, 8));
-                    copy.Remove(0, 8);
-                }
-                else
-                {
-                    if (copy.Length > 0)
-                    {
-                        for (int i = copy.Length; i < 8; i++)
-                        {
-                            copy.Append("0");
-                        }
-                        result.Add(copy.ToString());
-                    }
-                    OK = true;
-                }
             }
             return result;
         }
@@ -198,9 +171,200 @@ namespace LZW_structures
         }
         #endregion
         #region "Descompression"
-        public List<char> Decompression(List<byte> bytes)
+        public byte[] Decompression(string path)
         {
+            FormOriginalTable(path);
+            byte[] result = GetOriginalText(path);           
+            return result;
+        }
+        public void FormOriginalTable(string path)
+        {
+            int metaDataLength = GetOriginalName(path).Length + 2;
+            int numberOfCharacters = 0;
+
+            FileStream fs = File.OpenRead(path);
+            BinaryReader reader = new BinaryReader(fs);
+
+            bool matchNumberOfCharacters = false;
+            int counter = 0;
+
+            while (!matchNumberOfCharacters)
+            {
+                byte[] buffer = reader.ReadBytes(8);
+                for (int i = 0; i < buffer.Length; i++)
+                {
+                    if (counter == metaDataLength)
+                    {
+                        numberOfCharacters = buffer[i];
+                        matchNumberOfCharacters = true;
+                    }
+                    counter++;
+                }
+            }
+
+            FileStream fs1 = File.OpenRead(path);
+            BinaryReader reader1 = new BinaryReader(fs1);
+
+            bool allInserted = false;
+            counter = 0;
+
+            while (!allInserted)
+            {
+                byte[] buffer = reader1.ReadBytes(8);
+                for (int i = 0; i < buffer.Length; i++)
+                {
+                    if ((counter >= metaDataLength + 1) && (index <= numberOfCharacters))
+                    {
+                        char character = (char)buffer[i];
+                        symbolsAux.Add(index, character.ToString());
+                        index++;
+                    }
+                    counter++;
+                }
+                if (index == numberOfCharacters + 1)
+                {
+                    allInserted = true;
+                }
+            }
+        }
+        public string GetOriginalName(string path)
+        {
+            FileStream fs = File.OpenRead(path);
+            BinaryReader reader = new BinaryReader(fs);
+
+            StringBuilder result = new StringBuilder();
+            bool matchTen = false;
+
+            while (!matchTen)
+            {
+                byte[] buffer = reader.ReadBytes(8);
+                for (int i = 0; i < buffer.Length; i++)
+                {
+                    if (buffer[i] == 10)
+                    {
+                        matchTen = true;
+                    }
+                    else
+                    {
+                        if (!matchTen)
+                        {
+                            char aux = (char)buffer[i];
+                            result.Append(aux.ToString());
+                        }
+                    }
+                }
+            }
+            return result.ToString();
+        }
+        public byte[] GetOriginalText(string path)
+        {
+            FillList(path);
+            GetNFCT(path);
+
+            StringBuilder auxResult = new StringBuilder();            
+            StringBuilder previusString = new StringBuilder();
+            StringBuilder currentString = new StringBuilder();
+            StringBuilder previousPlusFirst = new StringBuilder();
+
+            for (int i = 0; i < textInNumbers.Count; i++)
+            {
+                if (i == 0)
+                {
+                    currentString.Append(symbolsAux[i]);
+                }
+                else
+                {
+                    if (textInNumbers[i] != 0)
+                    {
+                        previusString.Clear();
+                        previusString.Append(currentString.ToString());
+                        currentString.Clear();
+                        currentString.Append(symbolsAux[i]);
+                        previousPlusFirst.Clear();
+                        previousPlusFirst.Append(previusString.ToString() + currentString.ToString(0,1));
+
+                        symbolsAux.Add(index, previousPlusFirst.ToString());
+                        index++;
+                    }
+                }
+                auxResult.Append(currentString.ToString());
+            }
             return null;
+        }
+        public void FillList(string path)
+        {
+            int counter = 0;
+            int counterAux = 0;
+            int metaDataLength = GetOriginalName(path).Length + 3 + symbols.Count;
+
+            FileStream fs = File.OpenRead(path);
+            BinaryReader reader = new BinaryReader(fs);
+
+            while (fs.Length - (8 * counter) > 0)
+            {
+                byte[] buffer = reader.ReadBytes(8);
+
+                for (int i = 0; i < buffer.Length; i++)
+                {
+                    if (counterAux >= metaDataLength)
+                    {
+                        textInNumbers.Add(buffer[i]);
+                    }
+                    counterAux++;
+                }
+                counter++;
+            }
+        }
+        public void GetNFCT(string path)
+        {
+            int numberOfBytes = GetNumberOfBits(path);
+            StringBuilder bytes = new StringBuilder();
+            for (int i = 0; i < textInNumbers.Count; i++)
+            {
+                StringBuilder aux = new StringBuilder();
+                aux.Append(ConvertDecimalToBinary(textInNumbers[i]));
+                if (aux.Length < 8)
+                {
+                    for (int j = 0; j < 8 - aux.Length; j++)
+                    {
+                        aux.Insert(0, "0");
+                    }
+                }
+                bytes.Append(aux.ToString());
+            }
+            List<string> binaryNumbers = SeparateBytes(bytes.ToString(), numberOfBytes);
+            textInNumbers.Clear();
+            for (int i = 0; i < binaryNumbers.Count; i++)
+            {
+                textInNumbers.Add(ConvertBinaryToDecimal(binaryNumbers[i]));
+            }
+        }
+        public int GetNumberOfBits(string path)
+        {
+            int metaDataLength = GetOriginalName(path).Length + 1;
+            int result = 0;
+
+            FileStream fs = File.OpenRead(path);
+            BinaryReader reader = new BinaryReader(fs);
+
+            bool matchNumberOfBits = false;
+            int counter = 0;
+
+            while (!matchNumberOfBits)
+            {
+                byte[] buffer = reader.ReadBytes(8);
+                for (int i = 0; i < buffer.Length; i++)
+                {
+                    if (counter == metaDataLength)
+                    {
+                        result = buffer[i];
+                        matchNumberOfBits = true;
+                    }
+                    counter++;
+                }
+            }
+
+            return result;
         }
         #endregion
         #region "Auxiliaries"
@@ -233,6 +397,34 @@ namespace LZW_structures
                     result = "1" + result;
                 }
                 number = (int)(number / 2);
+            }
+            return result;
+        }
+        public List<string> SeparateBytes(string largeBinary, int length)
+        {
+            StringBuilder copy = new StringBuilder();
+            copy.Append(largeBinary);
+            List<string> result = new List<string>();
+            bool OK = false;
+            while (!OK)
+            {
+                if (copy.Length >= length)
+                {
+                    result.Add(copy.ToString(0, length));
+                    copy.Remove(0, length);
+                }
+                else
+                {
+                    if (copy.Length > 0)
+                    {
+                        for (int i = copy.Length; i < length; i++)
+                        {
+                            copy.Append("0");
+                        }
+                        result.Add(copy.ToString());
+                    }
+                    OK = true;
+                }
             }
             return result;
         }
