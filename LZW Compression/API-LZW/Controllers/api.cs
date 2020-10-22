@@ -5,8 +5,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Linq;
-using Microsoft.Extensions.Localization.Internal;
 using LZW_structures;
 using API_LZW.Models;
 

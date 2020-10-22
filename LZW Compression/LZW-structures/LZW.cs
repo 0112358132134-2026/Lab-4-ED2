@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -279,7 +278,18 @@ namespace LZW_structures
                         previusString.Clear();
                         previusString.Append(currentString.ToString());
                         currentString.Clear();
-                        currentString.Append(symbolsAux[textInNumbers[i]]);
+                        
+                        if (textInNumbers[i] <= symbolsAux.Count)
+                        {
+                            string ok = symbolsAux[textInNumbers[i]];
+                            currentString.Append(ok.ToString());
+                        }
+                        else
+                        {
+                            string ok = previusString.ToString() + previusString.ToString(0, 1);
+                            currentString.Append(ok.ToString());
+                        }                        
+
                         previousPlusFirst.Clear();
                         previousPlusFirst.Append(previusString.ToString() + currentString.ToString(0,1));
 
@@ -293,7 +303,13 @@ namespace LZW_structures
                 }
             }
 
-            byte[] result = Encoding.ASCII.GetBytes(auxResult.ToString());
+            string auxResult2 = auxResult.ToString();
+            char[] charArray = auxResult2.ToCharArray();
+            byte[] result = new byte[charArray.Length];
+            for (int i = 0; i < charArray.Length; i++)
+            {
+                result[i] = (byte)charArray[i];
+            }
             return result;
         }
         public void FillList(string path)
