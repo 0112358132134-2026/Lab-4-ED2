@@ -41,7 +41,6 @@ namespace API_LZW.Controllers
                     }
                     result = lzw.Compression(path + "/Copy/" + file.FileName, file.FileName);
                 }
-                //System.IO.File.Delete(path + "/Copy/" + file.FileName);
                 Archive response = new Archive
                 {
                     Content = result,
